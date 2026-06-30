@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Safety Net - Default Deny Catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Hardened Global Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- Entity Validation Blueprints ---
+
+    // Validation for User Profile Document
+    function isValidUser(data) {
+      return data.keys().hasAll(['username', 'email', 'emailVerified']) &&
+             data.keys().size() == 3 &&
+             data.username is string && data.username.size() >= 3 && data.username.size() <= 50 &&
+             data.email is string && data.email.size() >= 5 && data.email.size() <= 128 &&
+             data.emailVerified is bool;
+    }
+
+    // Validation for Activity Log Entries
+    function isValidActivityLog(data) {
+      return data.keys().hasAll(['id', 'type', 'timestamp', 'message']) &&
+             data.keys().size() == 4 &&
+             data.id is string && data.id.size() <= 64 &&
+             data.type is string && data.type.size() <= 64 &&
+             data.timestamp is string && data.timestamp.size() <= 64 &&
+             data.message is string && data.message.size() <= 500;
+    }
+
+    // Validation for API Key Entries
+    function isValidApiKey(data) {
+      return data.keys().hasAll(['id', 'name', 'key', 'created', 'status']) &&
+             data.keys().size() == 5 &&
+             data.id is string && data.id.size() <= 64 &&
+             data.name is string && data.name.size() <= 128 &&
+             data.key is string && data.key.size() <= 256 &&
+             data.created is string && data.created.size() <= 64 &&
+             data.status is string && data.status.size() <= 32;
+    }
+
+    // --- Secure Resource Matching Rules ---
+
+    // Rules for User Profile collection
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+      allow delete: if isOwner(userId);
+      
+      // Activity Logs subcollection - isolated to the user
+      match /activity_logs/{logId} {
+        allow read, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidActivityLog(request.resource.data);
+        allow update: if isOwner(userId) && isValidActivityLog(request.resource.data);
+        allow delete: if isOwner(userId);
+      }
+
+      // API Keys subcollection - isolated to the user
+      match /api_keys/{keyId} {
+        allow read, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidApiKey(request.resource.data);
+        allow update: if isOwner(userId) && isValidApiKey(request.resource.data);
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}

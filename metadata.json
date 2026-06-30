@@ -1,0 +1,8 @@
+{
+  "name": "BlackholeAi",
+  "description": "Futuristic developer console for managing API keys, models, and playground access for Blackhole AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

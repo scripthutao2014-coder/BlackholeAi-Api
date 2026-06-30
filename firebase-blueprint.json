@@ -1,0 +1,82 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Developer profile information stored in Firestore",
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "description": "Unique username chosen by developer"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Registered developer email address"
+        },
+        "emailVerified": {
+          "type": "boolean",
+          "description": "Indicates if the developer email is verified"
+        }
+      },
+      "required": ["username", "email", "emailVerified"]
+    },
+    "ActivityLog": {
+      "title": "Activity Log",
+      "description": "Log of developer actions on the gateway",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "type", "timestamp", "message"]
+    },
+    "ApiKey": {
+      "title": "ApiKey",
+      "description": "Gateway credentials for calling neural pipelines",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "name", "key", "created", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile document"
+    },
+    "/users/{userId}/activity_logs/{logId}": {
+      "schema": "ActivityLog",
+      "description": "User specific activity logs"
+    },
+    "/users/{userId}/api_keys/{keyId}": {
+      "schema": "ApiKey",
+      "description": "API Gateway Keys"
+    }
+  }
+}
